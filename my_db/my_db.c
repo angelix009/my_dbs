@@ -383,20 +383,20 @@ void traiter_commande(struct debogueur *dbg, char *cmd)
     if (!token)
         return;
 
-    if (strcmp(token, "quit") == 0)
+    if (strcmp(token, "quit") == 0 || strcmp(token, "q") == 0 )
     {
         kill(dbg->pid_fils, SIGKILL);
         exit(0);
     }
-    else if (strcmp(token, "registers") == 0)
+    else if (strcmp(token, "registers") == 0 || strcmp(token, "r") == 0)
     {
         afficher_registres(dbg->pid_fils);
     }
-    else if (strcmp(token, "continue") == 0)
+    else if (strcmp(token, "continue") == 0 || strcmp(token, "c") == 0)
     {
         continuer_execution(dbg);
     }
-    else if (strcmp(token, "next") == 0)
+    else if (strcmp(token, "next") == 0 || strcmp(token, "n") == 0)
     {
         token = strtok(NULL, " ");
         int nombre_pas = 1;
@@ -406,7 +406,7 @@ void traiter_commande(struct debogueur *dbg, char *cmd)
         }
         etape_suivante(dbg, nombre_pas);
     }
-    else if (strcmp(token, "kill") == 0)
+    else if (strcmp(token, "kill") == 0 || strcmp(token, "k") == 0)
     {
         kill(dbg->pid_fils, SIGKILL);
         printf("Programme tué\n");
