@@ -13,7 +13,7 @@ void func2(void)
 int main(void)
 {
     puts("before breakpoint");
-    asm volatile("int3");
+    __asm__("int3");
     func1();
     func2();
     puts("after breakpoint");
