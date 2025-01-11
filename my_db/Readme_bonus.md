@@ -13,7 +13,7 @@ J'ai implémenté le bonus backtrace qui permet d'afficher la pile d'appels du p
 Voici un exemple complet d'utilisation montrant le bon fonctionnement du backtrace :
 
 ```bash
-hamid@hamid-ThinkPad-E14-Gen-5:~/epita-apprentissage-mydbs-apping-2027-crystal/my_db$ ./my_db test
+exemple :~/epita-apprentissage-mydbs-apping-2027-crystal/my_db$ ./my_db test
 > c
 before breakpoint
 > b func1
@@ -59,8 +59,3 @@ L'implémentation utilise :
 1. Les registres RBP et RIP pour naviguer dans la pile d'appels
 2. La table des symboles du fichier ELF pour retrouver les noms des fonctions
 3. L'API ptrace pour lire la mémoire du programme débogué
-
-### Limitations
-- La profondeur de la pile d'appels dépend de la compilation
-- Les fonctions optimisées peuvent ne pas apparaître correctement dans la pile
-- Les noms de fonctions dépendent des symboles de débogage disponibles
