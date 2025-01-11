@@ -160,7 +160,6 @@ static void afficher_memoire(struct debogueur *dbg, unsigned long addr,
             perror("ptrace peekdata");
             return;
         }
-
         switch (format)
         {
         case 'x':
@@ -376,6 +375,73 @@ static void continuer_execution(struct debogueur *dbg)
     }
 }
 
+static void afficher_back_trace(struct debogueur *dbg)
+{
+    struct user_regs_struct regs;
+    if (ptrace(PTRACE_GETREGS, dbg->pid_fils, NULL, &regs) == -1)
+    {
+        perror("btrace getregs");
+        return;
+    }
+
+    unsigned long rbp = regs.rbp;
+    unsigned long rip = regs.rip;
+    int niveau = 0;
+
+    printf("Back Trace:\n");
+
+    printf("#%d  0x%lx", niveau, rip);
+    for (size_t i = 0; i < dbg->elf.nb_symboles; i++)
+    {
+        if (ELF64_ST_TYPE(dbg->elf.symboles[i].st_info) == STT_FUNC)
+        {
+            unsigned long debut = dbg->elf.symboles[i].st_value;
+            unsigned long fin = debut + dbg->elf.symboles[i].st_size;
+            if (rip >= debut && rip < fin)
+            {
+                printf(" dans %s", dbg->elf.table_symboles + dbg->elf.symboles[i].st_name);
+                break;
+            }
+        }
+    }
+    printf("\n");
+
+    while (rbp)
+    {
+        errno = 0;
+        unsigned long adr_retour = ptrace(PTRACE_PEEKDATA, dbg->pid_fils, rbp + 8, NULL);
+        if (errno != 0)
+            break;
+
+        errno = 0;
+        unsigned long rbp_suivant = ptrace(PTRACE_PEEKDATA, dbg->pid_fils, rbp, NULL);
+        if (errno != 0)
+            break;
+
+        niveau++;
+        printf("#%d  0x%lx", niveau, adr_retour);
+
+        for (size_t i = 0; i < dbg->elf.nb_symboles; i++)
+        {
+            if (ELF64_ST_TYPE(dbg->elf.symboles[i].st_info) == STT_FUNC)
+            {
+                unsigned long debut = dbg->elf.symboles[i].st_value;
+                unsigned long fin = debut + dbg->elf.symboles[i].st_size;
+                if (adr_retour >= debut && adr_retour < fin)
+                {
+                    printf(" dans %s", dbg->elf.table_symboles + dbg->elf.symboles[i].st_name);
+                    break;
+                }
+            }
+        }
+        printf("\n");
+
+        if (rbp_suivant <= rbp)
+            break;
+        rbp = rbp_suivant;
+    }
+}
+
 void traiter_commande(struct debogueur *dbg, char *cmd)
 {
     cmd[strcspn(cmd, "\n")] = 0;
@@ -469,6 +535,8 @@ void traiter_commande(struct debogueur *dbg, char *cmd)
             printf("Point d'arrêt ajouté à 0x%lx\n", addr);
         }
     }
+    else if (strcmp(token, "bt") == 0 || strcmp(token, "backtrace") == 0)
+        afficher_back_trace(dbg);
     else if (strcmp(token, "blist") == 0)
     {
         for (int i = 0; i < dbg->nb_points_arret; i++)
@@ -503,6 +571,8 @@ void traiter_commande(struct debogueur *dbg, char *cmd)
         printf("Point d'arrêt %d non trouvé\n", num);
     }
 }
+
+
 
 int main(int argc, char *argv[])
 {
